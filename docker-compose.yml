@@ -1,0 +1,10 @@
+services:
+  telegram-bot:
+    build: .
+    volumes:
+      - ./data:/bookgoblin/data
+    environment:
+      - TG_BOT_TOKEN=${TG_BOT_TOKEN}
+      - DB_NAME=${DB_NAME}
+      - DB_PATH=${DB_PATH}
+    restart: unless-stopped

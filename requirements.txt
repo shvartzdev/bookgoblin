@@ -1,0 +1,4 @@
+requests
+aiogram
+aiofiles
+python-dotenv
