@@ -97,16 +97,23 @@ def init_db():
         conn.close()
 
 def add_book(authors, title, description=None, isbn=None, format_type='physical', 
-             source='shop', year=None, pages=None, publisher=None, genre=None, url=None):
+             source='shop', year=None, pages=None, publisher=None, genre=None, url=None,
+             series_name=None, series_number=None, is_read=False):
     """Добавляет новую книгу в библиотеку"""
     conn = get_conn()
     cursor = conn.cursor()
     
     try:
         cursor.execute('''
-        INSERT INTO books (authors, title, description, isbn, format, source, year, pages, publisher, genre, url)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (authors, title, description, isbn, format_type, source, year, pages, publisher, genre, url))
+        INSERT INTO books (
+            authors, title, description, isbn, format, source, year, pages, publisher, genre, url,
+            series_name, series_number, is_read
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            authors, title, description, isbn, format_type, source, year, pages, publisher, genre, url,
+            series_name, series_number, int(is_read)  # bool в int для sqlite
+        ))
         
         book_id = cursor.lastrowid
         
@@ -315,7 +322,16 @@ def get_library_summary():
         
         # Общее количество книг в библиотеке
         cursor.execute('SELECT COUNT(*) FROM books')
-        summary['total_books'] = cursor.fetchone()[0]
+        total_books = cursor.fetchone()[0]
+        summary['total_books'] = total_books
+        
+        # Количество прочитанных книг
+        cursor.execute('SELECT COUNT(*) FROM books WHERE is_read = 1')
+        read_books = cursor.fetchone()[0]
+        summary['read_books'] = read_books
+        
+        # Процент прочитанных
+        summary['read_percent'] = (read_books / total_books * 100) if total_books > 0 else 0
         
         # Статистика по форматам
         cursor.execute('''
@@ -364,7 +380,6 @@ def get_library_summary():
         cursor.execute('SELECT COUNT(*) FROM to_buy_list')
         summary['to_buy_count'] = cursor.fetchone()[0]
         
-        
         # Последние добавленные книги (5 штук)
         cursor.execute('''
         SELECT title, authors, created_at
@@ -398,6 +413,7 @@ def get_library_summary():
     finally:
         conn.close()
 
+
 def format_library_summary(summary):
     """Форматирует статистику библиотеки для красивого вывода"""
     if not summary:
@@ -407,6 +423,7 @@ def format_library_summary(summary):
     
     formatted_text.append("📚 **СТАТИСТИКА БИБЛИОТЕКИ**")
     formatted_text.append(f"Всего книг: {summary['total_books']}")
+    formatted_text.append(f"Прочитано книг: {summary['read_books']} ({summary['read_percent']:.2f}%)")
     formatted_text.append("")
     
     if summary['formats']:
@@ -430,6 +447,7 @@ def format_library_summary(summary):
     formatted_text.append(f"🛒 К покупке: {summary['to_buy_count']}")
     
     return "\n".join(formatted_text)
+
 
 
 if __name__ == "__main__":

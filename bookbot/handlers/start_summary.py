@@ -6,7 +6,6 @@ from aiogram.filters import Command
 async def cmd_start(message: types.Message):
     welcome = ("📚 Добро пожаловать!\n"
                "Команды:\n"
-               "/addisbn — добавить по ISBN\n"
                "/addmanual — добавить вручную\n"
                "/summary — сводка")
     await message.answer(welcome)
