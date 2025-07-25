@@ -32,15 +32,19 @@ def init_db():
             authors TEXT NOT NULL,
             title TEXT NOT NULL,
             description TEXT,
-            isbn TEXT UNIQUE,
+            isbn TEXT,
             format TEXT NOT NULL CHECK (format IN ('physical', 'digital')),
-            source TEXT NOT NULL CHECK (source IN ('shop', 'author.today', 'fic')),
-            year INTEGER NOT NULL CHECK (year > 1000 AND year <= 2030),
-            pages INTEGER NOT NULL CHECK (pages > 0),
+            source TEXT CHECK (source IN ('shop', 'author.today', 'fic')),
+            year INTEGER CHECK (year > 1000 AND year <= 2030),
+            pages INTEGER CHECK (pages > 0),
+            char_count INTEGER CHECK (char_count >= 0),  
             publisher TEXT,
             genre TEXT,
             url TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            series_name TEXT,
+            series_number INTEGER,
+            is_read BOOLEAN DEFAULT 0
         )
         ''')
 
@@ -97,7 +101,7 @@ def init_db():
         conn.close()
 
 def add_book(authors, title, description=None, isbn=None, format_type='physical', 
-             source='shop', year=None, pages=None, publisher=None, genre=None, url=None,
+             source='shop', year=None, pages=None, char_count=None, publisher=None, genre=None, url=None,
              series_name=None, series_number=None, is_read=False):
     """Добавляет новую книгу в библиотеку"""
     conn = get_conn()
@@ -106,13 +110,13 @@ def add_book(authors, title, description=None, isbn=None, format_type='physical'
     try:
         cursor.execute('''
         INSERT INTO books (
-            authors, title, description, isbn, format, source, year, pages, publisher, genre, url,
+            authors, title, description, isbn, format, source, year, pages, char_count, publisher, genre, url,
             series_name, series_number, is_read
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            authors, title, description, isbn, format_type, source, year, pages, publisher, genre, url,
-            series_name, series_number, int(is_read)  # bool в int для sqlite
+            authors, title, description, isbn, format_type, source, year, pages, char_count, publisher, genre, url,
+            series_name, series_number, int(is_read)  
         ))
         
         book_id = cursor.lastrowid
