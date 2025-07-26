@@ -34,7 +34,7 @@ def init_db():
             description TEXT,
             isbn TEXT,
             format TEXT NOT NULL CHECK (format IN ('physical', 'digital')),
-            source TEXT CHECK (source IN ('shop', 'author.today', 'fic')),
+            source TEXT CHECK (source IN ('shop', 'author.today', 'ficbook', 'ao3')),
             year INTEGER CHECK (year > 1000 AND year <= 2030),
             pages INTEGER CHECK (pages > 0),
             char_count INTEGER CHECK (char_count >= 0),  

@@ -14,7 +14,8 @@ source_keyboard = InlineKeyboardMarkup(
         [
             InlineKeyboardButton(text="🛍 Магазин", callback_data="source:shop"),
             InlineKeyboardButton(text="✍ Author.Today", callback_data="source:author.today"),
-            InlineKeyboardButton(text="📖 Фикбук", callback_data="source:fic"),
+            InlineKeyboardButton(text="📖 Фикбук", callback_data="source:ficbook"),
+            InlineKeyboardButton(text="📖 ao3", callback_data="source:ao3")
         ]
     ]
 )

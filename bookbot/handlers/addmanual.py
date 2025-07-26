@@ -306,7 +306,6 @@ def format_book_summary(data: dict) -> str:
             f"Жанр: {data.get('genre', '')}",
             f"Описание: {data.get('description', '')}",
             f"ISBN: {data.get('isbn', '')}",
-            f"URL: {data.get('url', '')}",
         ])
 
     if data.get("series_title"):
