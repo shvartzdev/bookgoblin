@@ -1,9 +1,11 @@
 from .start_summary import register_handlers as register_start_summary
 from .addmanual import register_handlers as register_addmanual
 from .search import register_handlers as register_search
+from .add_to_read_buy_lists import register_handlers as register_adding_to_lists
 
 
 def register_all_handlers(dp):
     register_start_summary(dp)
     register_addmanual(dp)
     register_search(dp)
+    register_adding_to_lists(dp)
