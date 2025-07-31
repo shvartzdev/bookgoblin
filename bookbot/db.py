@@ -349,7 +349,7 @@ def get_library_summary():
         
         # Статистика по жанрам (исключая NULL значения)
         cursor.execute('''
-        SELECT genre, COUNT(*) as count
+        SELECT genre, COUNT(distinct id) as count
         FROM books
         WHERE genre IS NOT NULL AND genre != ''
         GROUP BY genre
@@ -358,24 +358,6 @@ def get_library_summary():
         genres = cursor.fetchall()
         summary['genres'] = {genre: count for genre, count in genres}
         
-        # Количество книг без указанного жанра
-        cursor.execute('''
-        SELECT COUNT(*) 
-        FROM books 
-        WHERE genre IS NULL OR genre = ''
-        ''')
-        summary['books_without_genre'] = cursor.fetchone()[0]
-        
-        # Статистика по годам публикации (топ-10)
-        cursor.execute('''
-        SELECT year, COUNT(*) as count
-        FROM books
-        GROUP BY year
-        ORDER BY count DESC, year DESC
-        LIMIT 10
-        ''')
-        years = cursor.fetchall()
-        summary['top_years'] = {year: count for year, count in years}
         
         # Статистика по спискам
         cursor.execute('SELECT COUNT(*) FROM to_read_list')
@@ -383,19 +365,6 @@ def get_library_summary():
         
         cursor.execute('SELECT COUNT(*) FROM to_buy_list')
         summary['to_buy_count'] = cursor.fetchone()[0]
-        
-        # Последние добавленные книги (5 штук)
-        cursor.execute('''
-        SELECT title, authors, created_at
-        FROM books
-        ORDER BY created_at DESC
-        LIMIT 5
-        ''')
-        recent_books = cursor.fetchall()
-        summary['recent_books'] = [
-            {'title': title, 'authors': authors, 'added_date': date}
-            for title, authors, date in recent_books
-        ]
         
         # Статистика активности по логам (последние 30 дней)
         cursor.execute('''
@@ -441,9 +410,13 @@ def format_library_summary(summary):
         formatted_text.append("🎭 **Топ жанров:**")
         for genre, count in list(summary['genres'].items())[:5]:  # Топ-5
             formatted_text.append(f"• {genre}: {count}")
-        if summary['books_without_genre'] > 0:
-            formatted_text.append(f"• Без жанра: {summary['books_without_genre']}")
         formatted_text.append("")
+
+    if summary['recent_activity']:
+        formatted_text.append("**Логи:**")
+        for event in list(summary['recent_activity'].items())[:5]:
+            formatted_text.append(f"• {event}")
+        formatted_text.append("") 
     
     
     formatted_text.append("📝 **Списки:**")
