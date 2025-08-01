@@ -13,7 +13,7 @@ async def cmd_start(message: types.Message):
 async def cmd_summary(message: types.Message):
     stats = get_library_summary()
     txt = format_library_summary(stats)
-    await message.answer(txt, parse_mode="Markdown")
+    await message.answer(txt, parse_mode="HTML")
 
 def register_handlers(dp: Dispatcher):
     dp.message.register(cmd_start, Command("start"))

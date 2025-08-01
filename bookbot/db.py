@@ -388,41 +388,40 @@ def get_library_summary():
 
 
 def format_library_summary(summary):
-    """Форматирует статистику библиотеки для красивого вывода"""
+    """Форматирует статистику библиотеки для красивого HTML-вывода"""
     if not summary:
         return "Библиотека пуста"
     
     formatted_text = []
-    
-    formatted_text.append("📚 **СТАТИСТИКА БИБЛИОТЕКИ**")
+
+    formatted_text.append("📚 <b>СТАТИСТИКА БИБЛИОТЕКИ</b>")
     formatted_text.append(f"Всего книг: {summary['total_books']}")
     formatted_text.append(f"Прочитано книг: {summary['read_books']} ({summary['read_percent']:.2f}%)")
     formatted_text.append("")
-    
+
     if summary['formats']:
-        formatted_text.append("📖 **По форматам:**")
+        formatted_text.append("📖 <b>По форматам:</b>")
         for format_type, count in summary['formats'].items():
             emoji = "📱" if format_type == "digital" else "📚"
             formatted_text.append(f"{emoji} {format_type.title()}: {count}")
         formatted_text.append("")
-    
+
     if summary['genres']:
-        formatted_text.append("🎭 **Топ жанров:**")
-        for genre, count in list(summary['genres'].items())[:5]:  # Топ-5
+        formatted_text.append("🎭 <b>Топ жанров:</b>")
+        for genre, count in list(summary['genres'].items())[:5]:
             formatted_text.append(f"• {genre}: {count}")
         formatted_text.append("")
 
     if summary['recent_activity']:
-        formatted_text.append("**Логи:**")
-        for event in list(summary['recent_activity'].items())[:5]:
-            formatted_text.append(f"• {event}")
+        formatted_text.append("<b>Логи:</b>")
+        for event_type, count in list(summary['recent_activity'].items())[:5]:
+            formatted_text.append(f"• {event_type}: {count}")
         formatted_text.append("") 
-    
-    
-    formatted_text.append("📝 **Списки:**")
+
+    formatted_text.append("📝 <b>Списки:</b>")
     formatted_text.append(f"📖 К прочтению: {summary['to_read_count']}")
     formatted_text.append(f"🛒 К покупке: {summary['to_buy_count']}")
-    
+
     return "\n".join(formatted_text)
 
 
