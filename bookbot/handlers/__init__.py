@@ -3,6 +3,7 @@ from .addmanual import register_handlers as register_addmanual
 from .search import register_handlers as register_search
 from .add_to_read_buy_lists import register_handlers as register_adding_to_lists
 from .logs import register_handlers as register_logs
+from .reports import register_handlers as register_reports
 
 
 def register_all_handlers(dp):
@@ -11,3 +12,4 @@ def register_all_handlers(dp):
     register_search(dp)
     register_adding_to_lists(dp)
     register_logs(dp)
+    register_reports(dp)
