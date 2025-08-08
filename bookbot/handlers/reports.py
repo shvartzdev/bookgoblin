@@ -133,9 +133,194 @@ def get_monthly_purchases_report():
         JOIN books b ON bl.book_id = b.id
         WHERE bl.event_type IN ('moved_from_buy_to_library', 'added') 
         AND bl.event_date >= ?
-        AND b.source = 'shop'
         ORDER BY bl.event_date DESC
         ''', (month_start_str,))
+        
+        purchased_books = cursor.fetchall()
+        
+        # Удаляем дубликаты по book_id (берем последнее событие)
+        unique_books = {}
+        for book in purchased_books:
+            book_id = book[1]
+            if book_id not in unique_books or book[2] > unique_books[book_id][2]:
+                unique_books[book_id] = book
+        
+        books_list = list(unique_books.values())
+        books_list.sort(key=lambda x: x[2], reverse=True)
+        
+        result = {
+            'books': books_list,
+            'total_books': len(books_list),
+            'period': month_start.strftime('%d.%m.%Y'),
+            'month_name': month_start.strftime('%B %Y')  # название месяца для отображения
+        }
+        
+        logger.info(f"Получен отчет о покупках за {month_start.strftime('%B %Y')}: {len(books_list)} книг")
+        return result
+
+    except sqlite3.Error as e:
+        logger.error(f"Ошибка при получении отчета о покупках: {e}")
+        raise
+    finally:
+        conn.close()
+
+def get_previous_month_reading_report():
+    """Получает отчет о прочитанных книгах за предыдущий календарный месяц"""
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    try:
+        # Определяем предыдущий месяц
+        now = datetime.now()
+        if now.month == 1:
+            prev_month = 12
+            prev_year = now.year - 1
+        else:
+            prev_month = now.month - 1
+            prev_year = now.year
+            
+        # Начало предыдущего месяца
+        month_start = datetime(prev_year, prev_month, 1, 0, 0, 0)
+        month_start_str = month_start.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Конец предыдущего месяца
+        if prev_month == 12:
+            next_month = 1
+            next_year = prev_year + 1
+        else:
+            next_month = prev_month + 1
+            next_year = prev_year
+            
+        month_end = datetime(next_year, next_month, 1, 0, 0, 0)
+        month_end_str = month_end.strftime('%Y-%m-%d %H:%M:%S')
+
+        # Получаем все события "finished_reading" за предыдущий календарный месяц с информацией о книгах
+        cursor.execute('''
+        SELECT 
+            bl.id,
+            bl.book_id,
+            bl.event_date,
+            bl.notes,
+            b.title,
+            b.authors,
+            b.series_name,
+            b.series_number,
+            b.pages,
+            b.format
+        FROM book_log bl
+        JOIN books b ON bl.book_id = b.id
+        WHERE bl.event_type = 'finished_reading' 
+        AND bl.event_date >= ? AND bl.event_date < ?
+        ORDER BY bl.event_date DESC
+        ''', (month_start_str, month_end_str))
+        
+        finished_books = cursor.fetchall()
+        
+        # Получаем также события "marked_as_read" (если используется)
+        cursor.execute('''
+        SELECT 
+            bl.id,
+            bl.book_id,
+            bl.event_date,
+            bl.notes,
+            b.title,
+            b.authors,
+            b.series_name,
+            b.series_number,
+            b.pages,
+            b.format
+        FROM book_log bl
+        JOIN books b ON bl.book_id = b.id
+        WHERE bl.event_type = 'marked_as_read' 
+        AND bl.event_date >= ? AND bl.event_date < ?
+        ORDER BY bl.event_date DESC
+        ''', (month_start_str, month_end_str))
+        
+        marked_books = cursor.fetchall()
+        
+        # Объединяем результаты и удаляем дубликаты по book_id
+        all_books = {}
+        
+        for book in finished_books + marked_books:
+            book_id = book[1]
+            # Если книга уже есть, берем более позднюю дату
+            if book_id not in all_books or book[2] > all_books[book_id][2]:
+                all_books[book_id] = book
+        
+        # Преобразуем в список и сортируем по дате
+        books_list = list(all_books.values())
+        books_list.sort(key=lambda x: x[2], reverse=True)
+        
+        # Подсчитываем статистику
+        total_books = len(books_list)
+        total_pages = sum(book[8] for book in books_list if book[8])
+        
+        result = {
+            'books': books_list,
+            'total_books': total_books,
+            'total_pages': total_pages,
+            'period': month_start.strftime('%d.%m.%Y'),
+            'month_name': month_start.strftime('%B %Y')  # название месяца для отображения
+        }
+        
+        logger.info(f"Получен отчет о чтении за {month_start.strftime('%B %Y')}: {total_books} книг")
+        return result
+
+    except sqlite3.Error as e:
+        logger.error(f"Ошибка при получении отчета о чтении: {e}")
+        raise
+    finally:
+        conn.close()
+
+def get_previous_month_purchases_report():
+    """Получает отчет о купленных книгах за предыдущий календарный месяц"""
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    try:
+        # Определяем предыдущий месяц
+        now = datetime.now()
+        if now.month == 1:
+            prev_month = 12
+            prev_year = now.year - 1
+        else:
+            prev_month = now.month - 1
+            prev_year = now.year
+            
+        # Начало предыдущего месяца
+        month_start = datetime(prev_year, prev_month, 1, 0, 0, 0)
+        month_start_str = month_start.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Конец предыдущего месяца
+        if prev_month == 12:
+            next_month = 1
+            next_year = prev_year + 1
+        else:
+            next_month = prev_month + 1
+            next_year = prev_year
+            
+        month_end = datetime(next_year, next_month, 1, 0, 0, 0)
+        month_end_str = month_end.strftime('%Y-%m-%d %H:%M:%S')
+
+        # Получаем все события покупки за предыдущий календарный месяц
+        cursor.execute('''
+        SELECT 
+            bl.id,
+            bl.book_id,
+            bl.event_date,
+            bl.notes,
+            b.title,
+            b.authors,
+            b.series_name,
+            b.series_number,
+            b.format,
+            b.source
+        FROM book_log bl
+        JOIN books b ON bl.book_id = b.id
+        WHERE bl.event_type IN ('moved_from_buy_to_library', 'added') 
+        AND bl.event_date >= ? AND bl.event_date < ?
+        ORDER BY bl.event_date DESC
+        ''', (month_start_str, month_end_str))
         
         purchased_books = cursor.fetchall()
         
@@ -526,6 +711,58 @@ async def cmd_last_read(message: types.Message):
         logger.error(f"Ошибка при выполнении команды last_read: {e}")
         await message.answer("❌ Произошла ошибка при получении месячного отчета")
 
+async def cmd_setup_auto_reports(message: types.Message):
+    """Команда для настройки автоматических отчетов"""
+    try:
+        # Получаем ID пользователя
+        user_id = message.from_user.id
+        
+        # Настраиваем планировщик
+        setup_scheduler(message.bot, user_id)
+        
+        await message.answer(
+            "✅ Автоматические месячные отчеты настроены!\n\n"
+            "📅 Отчеты будут отправляться в последний день каждого месяца в 9:00\n"
+            "🔄 Для изменения настроек используйте команду снова"
+        )
+        
+    except Exception as e:
+        logger.error(f"Ошибка при настройке автоматических отчетов: {e}")
+        await message.answer("❌ Произошла ошибка при настройке автоматических отчетов")
+
+async def cmd_stop_auto_reports(message: types.Message):
+    """Команда для остановки автоматических отчетов"""
+    try:
+        stop_scheduler()
+        await message.answer("⏹ Автоматические отчеты остановлены")
+        
+    except Exception as e:
+        logger.error(f"Ошибка при остановке автоматических отчетов: {e}")
+        await message.answer("❌ Произошла ошибка при остановке автоматических отчетов")
+
+async def cmd_test_auto_report(message: types.Message):
+    """Тестовая команда для проверки автоматического отчета"""
+    try:
+        # Получаем ID пользователя
+        current_user_id = message.from_user.id
+        
+        # Временно устанавливаем глобальные переменные
+        global bot_instance, user_id
+        bot_instance = message.bot
+        user_id = current_user_id
+        
+        # Запускаем автоматический отчет
+        await send_monthly_report_auto()
+        
+        await message.answer("✅ Тестовый автоматический отчет отправлен!")
+        
+    except Exception as e:
+        logger.error(f"Ошибка при тестировании автоматического отчета: {e}")
+        await message.answer(f"❌ Ошибка при тестировании: {str(e)}")
+
 def register_handlers(dp: Dispatcher):
     """Регистрация обработчиков команд"""
     dp.message.register(cmd_last_read, Command("last_read"))
+    dp.message.register(cmd_setup_auto_reports, Command("setup_auto_reports"))
+    dp.message.register(cmd_stop_auto_reports, Command("stop_auto_reports"))
+    dp.message.register(cmd_test_auto_report, Command("test_auto_report"))
