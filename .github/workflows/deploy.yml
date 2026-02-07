@@ -17,3 +17,4 @@ jobs:
           script: |
             cd /root/bookgoblin
             git pull origin main
+            docker-compose up -d --build
